@@ -1,0 +1,81 @@
+# Infrastructure stack: postgres, redis, minio.
+#
+# Volumes are named so `make clean` (`down -v`) drops all dev data deterministically.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: studyapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-studyapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studyapp}
+      POSTGRES_DB: ${POSTGRES_DB:-studyapp_dev}
+    ports:
+      # Bind to 5433 on host to avoid clashing with a system-installed Postgres
+      # listening on 5432. Inside Docker the service still listens on 5432.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studyapp} -d ${POSTGRES_DB:-studyapp_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: studyapp-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: studyapp-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # console
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-bootstrap:
+    image: minio/mc:latest
+    container_name: studyapp-minio-bootstrap
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-study-materials}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\" &&
+      (mc mb local/\"$$MINIO_BUCKET\" || echo 'bucket already exists') &&
+      mc anonymous set none local/\"$$MINIO_BUCKET\"
+      "
+    restart: "no"
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

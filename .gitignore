@@ -1,0 +1,55 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Ruby / Rails
+/rails-api/tmp/
+/rails-api/log/
+/rails-api/storage/
+/rails-api/vendor/bundle/
+/rails-api/.bundle/
+/rails-api/public/assets/
+/rails-api/.byebug_history
+/rails-api/config/master.key
+/rails-api/config/credentials/*.key
+/rails-api/db/*.sqlite3
+/rails-api/db/*.sqlite3-*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+**/.venv/
+.python-version
+.ruff_cache/
+.mypy_cache/
+
+# Build artefacts
+dist/
+build/
+*.tsbuildinfo
+
+# Docker / data volumes
+/.data/
+/data/
+
+# Misc
+*.log

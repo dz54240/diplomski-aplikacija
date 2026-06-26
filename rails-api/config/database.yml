@@ -1,0 +1,21 @@
+# PostgreSQL configuration.
+#
+# All environments rely on the DATABASE_URL env var (see .env.example at repo
+# root). The infra docker-compose serves Postgres on localhost:5432.
+
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  url: <%= ENV.fetch("DATABASE_URL") { "postgres://studyapp:studyapp@127.0.0.1:5433/studyapp_dev" } %>
+
+test:
+  <<: *default
+  url: <%= ENV.fetch("TEST_DATABASE_URL") { "postgres://studyapp:studyapp@127.0.0.1:5433/studyapp_test" } %>
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>

@@ -1,0 +1,9 @@
+export interface Subject {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  docCount: number;
+  lastActivity: string;
+  lastActivityRaw: number;
+}
